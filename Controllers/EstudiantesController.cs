@@ -131,6 +131,25 @@ public async Task<ActionResult<EstudianteDto>> Actualizar(
     return Ok(ConvertirADto(estudiante));
 }
 
+[HttpDelete("{id:int}")]
+public async Task<IActionResult> Eliminar(int id)
+{
+    var estudiante = await _context.Estudiantes.FindAsync(id);
+
+    if (estudiante is null)
+    {
+        return NotFound(new
+        {
+            mensaje = $"No se encontró un estudiante con el identificador {id}."
+        });
+    }
+
+    _context.Estudiantes.Remove(estudiante);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+
 private static EstudianteDto ConvertirADto(Estudiante estudiante)
 {
     return new EstudianteDto
