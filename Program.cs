@@ -1,9 +1,35 @@
 using GestionEstudiantesApi.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errores = context.ModelState
+            .Where(elemento => elemento.Value?.Errors.Count > 0)
+            .ToDictionary(
+                elemento => elemento.Key,
+                elemento => elemento.Value!.Errors
+                    .Select(error =>
+                        string.IsNullOrWhiteSpace(error.ErrorMessage)
+                            ? "El valor enviado no es válido."
+                            : error.ErrorMessage
+                    )
+                    .ToArray()
+            );
+
+        return new BadRequestObjectResult(new
+        {
+            mensaje = "Los datos enviados no son válidos.",
+            errores
+        });
+    };
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
