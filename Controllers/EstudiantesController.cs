@@ -2,6 +2,7 @@ using GestionEstudiantesApi.Data;
 using GestionEstudiantesApi.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using GestionEstudiantesApi.Models;
 
 namespace GestionEstudiantesApi.Controllers;
 
@@ -70,4 +71,49 @@ public async Task<ActionResult<EstudianteDto>> ObtenerPorId(int id)
 
     return Ok(estudiante);
 }
+
+[HttpPost]
+public async Task<ActionResult<EstudianteDto>> Crear(
+    CrearEstudianteDto estudianteDto)
+{
+    var estudiante = new Estudiante
+    {
+        Matricula = estudianteDto.Matricula.Trim(),
+        Nombres = estudianteDto.Nombres.Trim(),
+        Apellidos = estudianteDto.Apellidos.Trim(),
+        Correo = estudianteDto.Correo.Trim().ToLower(),
+        Carrera = estudianteDto.Carrera.Trim(),
+        FechaNacimiento = estudianteDto.FechaNacimiento,
+        Activo = true,
+        FechaRegistro = DateTime.UtcNow
+    };
+
+    _context.Estudiantes.Add(estudiante);
+    await _context.SaveChangesAsync();
+
+    var respuesta = ConvertirADto(estudiante);
+
+    return CreatedAtAction(
+        nameof(ObtenerPorId),
+        new { id = estudiante.Id },
+        respuesta
+    );
+}
+
+private static EstudianteDto ConvertirADto(Estudiante estudiante)
+{
+    return new EstudianteDto
+    {
+        Id = estudiante.Id,
+        Matricula = estudiante.Matricula,
+        Nombres = estudiante.Nombres,
+        Apellidos = estudiante.Apellidos,
+        Correo = estudiante.Correo,
+        Carrera = estudiante.Carrera,
+        FechaNacimiento = estudiante.FechaNacimiento,
+        Activo = estudiante.Activo,
+        FechaRegistro = estudiante.FechaRegistro
+    };
+}
+
 }
