@@ -1,8 +1,8 @@
 using GestionEstudiantesApi.Data;
 using GestionEstudiantesApi.DTOs;
+using GestionEstudiantesApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using GestionEstudiantesApi.Models;
 
 namespace GestionEstudiantesApi.Controllers;
 
@@ -42,12 +42,124 @@ public class EstudiantesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-public async Task<ActionResult<EstudianteDto>> ObtenerPorId(int id)
-{
-    var estudiante = await _context.Estudiantes
-        .AsNoTracking()
-        .Where(estudiante => estudiante.Id == id)
-        .Select(estudiante => new EstudianteDto
+    public async Task<ActionResult<EstudianteDto>> ObtenerPorId(int id)
+    {
+        var estudiante = await _context.Estudiantes
+            .AsNoTracking()
+            .Where(estudiante => estudiante.Id == id)
+            .Select(estudiante => new EstudianteDto
+            {
+                Id = estudiante.Id,
+                Matricula = estudiante.Matricula,
+                Nombres = estudiante.Nombres,
+                Apellidos = estudiante.Apellidos,
+                Correo = estudiante.Correo,
+                Carrera = estudiante.Carrera,
+                FechaNacimiento = estudiante.FechaNacimiento,
+                Activo = estudiante.Activo,
+                FechaRegistro = estudiante.FechaRegistro
+            })
+            .FirstOrDefaultAsync();
+
+        if (estudiante is null)
+        {
+            return NotFound(new
+            {
+                mensaje = $"No se encontró un estudiante con el identificador {id}."
+            });
+        }
+
+        return Ok(estudiante);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<EstudianteDto>> Crear(
+        CrearEstudianteDto estudianteDto)
+    {
+        var estudiante = new Estudiante
+        {
+            Matricula = estudianteDto.Matricula.Trim(),
+            Nombres = estudianteDto.Nombres.Trim(),
+            Apellidos = estudianteDto.Apellidos.Trim(),
+            Correo = estudianteDto.Correo.Trim().ToLower(),
+            Carrera = estudianteDto.Carrera.Trim(),
+
+            FechaNacimiento = DateTime.SpecifyKind(
+                estudianteDto.FechaNacimiento!.Value,
+                DateTimeKind.Utc
+            ),
+
+            Activo = true,
+            FechaRegistro = DateTime.UtcNow
+        };
+
+        _context.Estudiantes.Add(estudiante);
+        await _context.SaveChangesAsync();
+
+        var respuesta = ConvertirADto(estudiante);
+
+        return CreatedAtAction(
+            nameof(ObtenerPorId),
+            new { id = estudiante.Id },
+            respuesta
+        );
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<EstudianteDto>> Actualizar(
+        int id,
+        ActualizarEstudianteDto estudianteDto)
+    {
+        var estudiante = await _context.Estudiantes.FindAsync(id);
+
+        if (estudiante is null)
+        {
+            return NotFound(new
+            {
+                mensaje = $"No se encontró un estudiante con el identificador {id}."
+            });
+        }
+
+        estudiante.Matricula = estudianteDto.Matricula.Trim();
+        estudiante.Nombres = estudianteDto.Nombres.Trim();
+        estudiante.Apellidos = estudianteDto.Apellidos.Trim();
+        estudiante.Correo = estudianteDto.Correo.Trim().ToLower();
+        estudiante.Carrera = estudianteDto.Carrera.Trim();
+
+        estudiante.FechaNacimiento = DateTime.SpecifyKind(
+            estudianteDto.FechaNacimiento!.Value,
+            DateTimeKind.Utc
+        );
+
+        estudiante.Activo = estudianteDto.Activo;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(ConvertirADto(estudiante));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Eliminar(int id)
+    {
+        var estudiante = await _context.Estudiantes.FindAsync(id);
+
+        if (estudiante is null)
+        {
+            return NotFound(new
+            {
+                mensaje = $"No se encontró un estudiante con el identificador {id}."
+            });
+        }
+
+        _context.Estudiantes.Remove(estudiante);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    private static EstudianteDto ConvertirADto(Estudiante estudiante)
+    {
+        return new EstudianteDto
         {
             Id = estudiante.Id,
             Matricula = estudiante.Matricula,
@@ -58,112 +170,6 @@ public async Task<ActionResult<EstudianteDto>> ObtenerPorId(int id)
             FechaNacimiento = estudiante.FechaNacimiento,
             Activo = estudiante.Activo,
             FechaRegistro = estudiante.FechaRegistro
-        })
-        .FirstOrDefaultAsync();
-
-    if (estudiante is null)
-    {
-        return NotFound(new
-        {
-            mensaje = $"No se encontró un estudiante con el identificador {id}."
-        });
+        };
     }
-
-    return Ok(estudiante);
-}
-
-[HttpPost]
-public async Task<ActionResult<EstudianteDto>> Crear(
-    CrearEstudianteDto estudianteDto)
-{
-    var estudiante = new Estudiante
-    {
-        Matricula = estudianteDto.Matricula.Trim(),
-        Nombres = estudianteDto.Nombres.Trim(),
-        Apellidos = estudianteDto.Apellidos.Trim(),
-        Correo = estudianteDto.Correo.Trim().ToLower(),
-        Carrera = estudianteDto.Carrera.Trim(),
-        FechaNacimiento = estudianteDto.FechaNacimiento,
-        Activo = true,
-        FechaRegistro = DateTime.UtcNow
-    };
-
-    _context.Estudiantes.Add(estudiante);
-    await _context.SaveChangesAsync();
-
-    var respuesta = ConvertirADto(estudiante);
-
-    return CreatedAtAction(
-        nameof(ObtenerPorId),
-        new { id = estudiante.Id },
-        respuesta
-    );
-}
-
-[HttpPut("{id:int}")]
-public async Task<ActionResult<EstudianteDto>> Actualizar(
-    int id,
-    ActualizarEstudianteDto estudianteDto)
-{
-    var estudiante = await _context.Estudiantes.FindAsync(id);
-
-    if (estudiante is null)
-    {
-        return NotFound(new
-        {
-            mensaje = $"No se encontró un estudiante con el identificador {id}."
-        });
-    }
-
-    estudiante.Matricula = estudianteDto.Matricula.Trim();
-    estudiante.Nombres = estudianteDto.Nombres.Trim();
-    estudiante.Apellidos = estudianteDto.Apellidos.Trim();
-    estudiante.Correo = estudianteDto.Correo.Trim().ToLower();
-    estudiante.Carrera = estudianteDto.Carrera.Trim();
-    estudiante.FechaNacimiento = DateTime.SpecifyKind(
-        estudianteDto.FechaNacimiento,
-        DateTimeKind.Utc
-    );
-    estudiante.Activo = estudianteDto.Activo;
-
-    await _context.SaveChangesAsync();
-
-    return Ok(ConvertirADto(estudiante));
-}
-
-[HttpDelete("{id:int}")]
-public async Task<IActionResult> Eliminar(int id)
-{
-    var estudiante = await _context.Estudiantes.FindAsync(id);
-
-    if (estudiante is null)
-    {
-        return NotFound(new
-        {
-            mensaje = $"No se encontró un estudiante con el identificador {id}."
-        });
-    }
-
-    _context.Estudiantes.Remove(estudiante);
-    await _context.SaveChangesAsync();
-
-    return NoContent();
-}
-
-private static EstudianteDto ConvertirADto(Estudiante estudiante)
-{
-    return new EstudianteDto
-    {
-        Id = estudiante.Id,
-        Matricula = estudiante.Matricula,
-        Nombres = estudiante.Nombres,
-        Apellidos = estudiante.Apellidos,
-        Correo = estudiante.Correo,
-        Carrera = estudiante.Carrera,
-        FechaNacimiento = estudiante.FechaNacimiento,
-        Activo = estudiante.Activo,
-        FechaRegistro = estudiante.FechaRegistro
-    };
-}
-
 }
