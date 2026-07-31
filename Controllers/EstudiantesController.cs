@@ -100,6 +100,37 @@ public async Task<ActionResult<EstudianteDto>> Crear(
     );
 }
 
+[HttpPut("{id:int}")]
+public async Task<ActionResult<EstudianteDto>> Actualizar(
+    int id,
+    ActualizarEstudianteDto estudianteDto)
+{
+    var estudiante = await _context.Estudiantes.FindAsync(id);
+
+    if (estudiante is null)
+    {
+        return NotFound(new
+        {
+            mensaje = $"No se encontró un estudiante con el identificador {id}."
+        });
+    }
+
+    estudiante.Matricula = estudianteDto.Matricula.Trim();
+    estudiante.Nombres = estudianteDto.Nombres.Trim();
+    estudiante.Apellidos = estudianteDto.Apellidos.Trim();
+    estudiante.Correo = estudianteDto.Correo.Trim().ToLower();
+    estudiante.Carrera = estudianteDto.Carrera.Trim();
+    estudiante.FechaNacimiento = DateTime.SpecifyKind(
+        estudianteDto.FechaNacimiento,
+        DateTimeKind.Utc
+    );
+    estudiante.Activo = estudianteDto.Activo;
+
+    await _context.SaveChangesAsync();
+
+    return Ok(ConvertirADto(estudiante));
+}
+
 private static EstudianteDto ConvertirADto(Estudiante estudiante)
 {
     return new EstudianteDto
