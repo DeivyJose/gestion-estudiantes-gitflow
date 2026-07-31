@@ -73,70 +73,122 @@ public class EstudiantesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<EstudianteDto>> Crear(
-        CrearEstudianteDto estudianteDto)
+public async Task<ActionResult<EstudianteDto>> Crear(
+    CrearEstudianteDto estudianteDto)
+{
+    var matricula = estudianteDto.Matricula.Trim();
+    var correo = estudianteDto.Correo.Trim().ToLowerInvariant();
+
+    var matriculaRegistrada = await _context.Estudiantes
+        .AnyAsync(estudiante => estudiante.Matricula == matricula);
+
+    if (matriculaRegistrada)
     {
-        var estudiante = new Estudiante
+        return Conflict(new
         {
-            Matricula = estudianteDto.Matricula.Trim(),
-            Nombres = estudianteDto.Nombres.Trim(),
-            Apellidos = estudianteDto.Apellidos.Trim(),
-            Correo = estudianteDto.Correo.Trim().ToLower(),
-            Carrera = estudianteDto.Carrera.Trim(),
-
-            FechaNacimiento = DateTime.SpecifyKind(
-                estudianteDto.FechaNacimiento!.Value,
-                DateTimeKind.Utc
-            ),
-
-            Activo = true,
-            FechaRegistro = DateTime.UtcNow
-        };
-
-        _context.Estudiantes.Add(estudiante);
-        await _context.SaveChangesAsync();
-
-        var respuesta = ConvertirADto(estudiante);
-
-        return CreatedAtAction(
-            nameof(ObtenerPorId),
-            new { id = estudiante.Id },
-            respuesta
-        );
+            mensaje = $"Ya existe un estudiante con la matrícula {matricula}."
+        });
     }
 
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<EstudianteDto>> Actualizar(
-        int id,
-        ActualizarEstudianteDto estudianteDto)
+    var correoRegistrado = await _context.Estudiantes
+        .AnyAsync(estudiante => estudiante.Correo == correo);
+
+    if (correoRegistrado)
     {
-        var estudiante = await _context.Estudiantes.FindAsync(id);
-
-        if (estudiante is null)
+        return Conflict(new
         {
-            return NotFound(new
-            {
-                mensaje = $"No se encontró un estudiante con el identificador {id}."
-            });
-        }
+            mensaje = $"Ya existe un estudiante con el correo {correo}."
+        });
+    }
 
-        estudiante.Matricula = estudianteDto.Matricula.Trim();
-        estudiante.Nombres = estudianteDto.Nombres.Trim();
-        estudiante.Apellidos = estudianteDto.Apellidos.Trim();
-        estudiante.Correo = estudianteDto.Correo.Trim().ToLower();
-        estudiante.Carrera = estudianteDto.Carrera.Trim();
-
-        estudiante.FechaNacimiento = DateTime.SpecifyKind(
+    var estudiante = new Estudiante
+    {
+        Matricula = matricula,
+        Nombres = estudianteDto.Nombres.Trim(),
+        Apellidos = estudianteDto.Apellidos.Trim(),
+        Correo = correo,
+        Carrera = estudianteDto.Carrera.Trim(),
+        FechaNacimiento = DateTime.SpecifyKind(
             estudianteDto.FechaNacimiento!.Value,
             DateTimeKind.Utc
+        ),
+        Activo = true,
+        FechaRegistro = DateTime.UtcNow
+    };
+
+    _context.Estudiantes.Add(estudiante);
+    await _context.SaveChangesAsync();
+
+    var respuesta = ConvertirADto(estudiante);
+
+    return CreatedAtAction(
+        nameof(ObtenerPorId),
+        new { id = estudiante.Id },
+        respuesta
+    );
+}
+
+    [HttpPut("{id:int}")]
+public async Task<ActionResult<EstudianteDto>> Actualizar(
+    int id,
+    ActualizarEstudianteDto estudianteDto)
+{
+    var estudiante = await _context.Estudiantes.FindAsync(id);
+
+    if (estudiante is null)
+    {
+        return NotFound(new
+        {
+            mensaje = $"No se encontró un estudiante con el identificador {id}."
+        });
+    }
+
+    var matricula = estudianteDto.Matricula.Trim();
+    var correo = estudianteDto.Correo.Trim().ToLowerInvariant();
+
+    var matriculaRegistrada = await _context.Estudiantes
+        .AnyAsync(otroEstudiante =>
+            otroEstudiante.Id != id &&
+            otroEstudiante.Matricula == matricula
         );
 
-        estudiante.Activo = estudianteDto.Activo;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(ConvertirADto(estudiante));
+    if (matriculaRegistrada)
+    {
+        return Conflict(new
+        {
+            mensaje = $"Ya existe otro estudiante con la matrícula {matricula}."
+        });
     }
+
+    var correoRegistrado = await _context.Estudiantes
+        .AnyAsync(otroEstudiante =>
+            otroEstudiante.Id != id &&
+            otroEstudiante.Correo == correo
+        );
+
+    if (correoRegistrado)
+    {
+        return Conflict(new
+        {
+            mensaje = $"Ya existe otro estudiante con el correo {correo}."
+        });
+    }
+
+    estudiante.Matricula = matricula;
+    estudiante.Nombres = estudianteDto.Nombres.Trim();
+    estudiante.Apellidos = estudianteDto.Apellidos.Trim();
+    estudiante.Correo = correo;
+    estudiante.Carrera = estudianteDto.Carrera.Trim();
+    estudiante.FechaNacimiento = DateTime.SpecifyKind(
+        estudianteDto.FechaNacimiento!.Value,
+        DateTimeKind.Utc
+    );
+    estudiante.Activo = estudianteDto.Activo;
+
+    await _context.SaveChangesAsync();
+
+    return Ok(ConvertirADto(estudiante));
+}
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Eliminar(int id)
