@@ -36,8 +36,47 @@ public sealed class LoginPage
 
     public void Abrir(string urlBase)
     {
-        _driver.Navigate().GoToUrl(urlBase);
-        EsperarPaginaCargada();
+        const int maximoIntentos = 2;
+
+        for (
+            var intento = 1;
+            intento <= maximoIntentos;
+            intento++
+        )
+        {
+            try
+            {
+                _driver
+                    .Navigate()
+                    .GoToUrl(urlBase);
+
+                EsperarPaginaCargada();
+                return;
+            }
+            catch (WebDriverTimeoutException)
+                when (intento < maximoIntentos)
+            {
+                DetenerCargaActual();
+                Thread.Sleep(1000);
+            }
+        }
+    }
+
+    private void DetenerCargaActual()
+    {
+        try
+        {
+            var ejecutor =
+                (IJavaScriptExecutor)_driver;
+
+            ejecutor.ExecuteScript(
+                "window.stop();"
+            );
+        }
+        catch (WebDriverException)
+        {
+            // Se realizará un segundo intento de navegación.
+        }
     }
 
     public void EsperarPaginaCargada()

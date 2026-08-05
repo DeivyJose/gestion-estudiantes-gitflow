@@ -29,7 +29,8 @@ public abstract class SeleniumTestBase
 
         var opciones = new EdgeOptions
         {
-            BinaryLocation = rutaEdge
+            BinaryLocation = rutaEdge,
+            PageLoadStrategy = PageLoadStrategy.Eager
         };
 
         opciones.AddArgument("--no-first-run");
@@ -69,7 +70,7 @@ public abstract class SeleniumTestBase
         }
 
         Driver.Manage().Timeouts().PageLoad =
-            TimeSpan.FromSeconds(30);
+            TimeSpan.FromSeconds(60);
 
         Driver.Manage().Timeouts().ImplicitWait =
             TimeSpan.Zero;
