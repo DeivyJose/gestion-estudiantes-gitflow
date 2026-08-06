@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Estudiantes | Gestión de Estudiantes</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/styles.css"
+    >
+</head>
+
+<body class="dashboard-page">
+    <header class="dashboard-header">
+        <div class="brand-area">
+            <div
+                class="brand-icon"
+                aria-hidden="true"
+            >
+                GE
+            </div>
+
+            <div>
+                <p class="dashboard-label">
+                    Sistema académico
+                </p>
+
+                <h1>Gestión de Estudiantes</h1>
+
+                <p class="dashboard-subtitle">
+                    Administración de registros estudiantiles
+                </p>
+            </div>
+        </div>
+
+        <div class="session-area">
+            <span id="usuario-autenticado">
+                Cargando usuario...
+            </span>
+
+            <button
+                id="btn-cerrar-sesion"
+                class="secondary-button"
+                type="button"
+            >
+                Cerrar sesión
+            </button>
+        </div>
+    </header>
+
+    <main class="dashboard-content">
+        <section class="summary-section">
+            <div>
+                <p class="section-label">
+                    Panel principal
+                </p>
+
+                <h2>Administración de estudiantes</h2>
+
+                <p>
+                    Registra, consulta, actualiza y elimina estudiantes
+                    desde una sola pantalla.
+                </p>
+            </div>
+
+            <article class="summary-card">
+                <span class="summary-card-label">
+                    Estudiantes mostrados
+                </span>
+
+                <strong id="cantidad-estudiantes">
+                    0
+                </strong>
+            </article>
+        </section>
+
+        <div
+            id="mensaje-global"
+            class="message global-message"
+            role="alert"
+            aria-live="polite"
+        ></div>
+
+        <section class="management-grid">
+            <article class="form-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="section-label">
+                            Formulario
+                        </p>
+
+                        <h2 id="titulo-formulario">
+                            Registrar estudiante
+                        </h2>
+                    </div>
+
+                    <span
+                        id="modo-formulario"
+                        class="mode-badge"
+                    >
+                        Nuevo registro
+                    </span>
+                </div>
+
+                <form
+                    id="formulario-estudiante"
+                    novalidate
+                >
+                    <input
+                        id="estudiante-id"
+                        name="estudianteId"
+                        type="hidden"
+                    >
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="matricula">
+                                Matrícula
+                            </label>
+
+                            <input
+                                id="matricula"
+                                name="matricula"
+                                type="text"
+                                inputmode="numeric"
+                                minlength="8"
+                                maxlength="8"
+                                pattern="[0-9]{8}"
+                                placeholder="Ejemplo: 20250938"
+                                required
+                            >
+
+                            <small class="field-help">
+                                Debe contener exactamente 8 números.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nombres">
+                                Nombres
+                            </label>
+
+                            <input
+                                id="nombres"
+                                name="nombres"
+                                type="text"
+                                minlength="2"
+                                maxlength="100"
+                                placeholder="Escribe los nombres"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apellidos">
+                                Apellidos
+                            </label>
+
+                            <input
+                                id="apellidos"
+                                name="apellidos"
+                                type="text"
+                                minlength="2"
+                                maxlength="100"
+                                placeholder="Escribe los apellidos"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="correo">
+                                Correo electrónico
+                            </label>
+
+                            <input
+                                id="correo"
+                                name="correo"
+                                type="email"
+                                maxlength="150"
+                                placeholder="estudiante@correo.com"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="carrera">
+                                Carrera
+                            </label>
+
+                            <input
+                                id="carrera"
+                                name="carrera"
+                                type="text"
+                                minlength="2"
+                                maxlength="150"
+                                placeholder="Ejemplo: Desarrollo de Software"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fecha-nacimiento">
+                                Fecha de nacimiento
+                            </label>
+
+                            <input
+                                id="fecha-nacimiento"
+                                name="fechaNacimiento"
+                                type="date"
+                                required
+                            >
+                        </div>
+
+                        <div
+                            id="grupo-activo"
+                            class="form-group checkbox-group hidden"
+                        >
+                            <label
+                                class="checkbox-label"
+                                for="activo"
+                            >
+                                <input
+                                    id="activo"
+                                    name="activo"
+                                    type="checkbox"
+                                    checked
+                                >
+
+                                <span>
+                                    Estudiante activo
+                                </span>
+                            </label>
+
+                            <small class="field-help">
+                                Desmarca esta opción para establecer el
+                                estudiante como inactivo.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div
+                        id="mensaje-formulario"
+                        class="message"
+                        role="alert"
+                        aria-live="polite"
+                    ></div>
+
+                    <div class="form-actions">
+                        <button
+                            id="btn-guardar-estudiante"
+                            class="primary-button"
+                            type="submit"
+                        >
+                            Guardar estudiante
+                        </button>
+
+                        <button
+                            id="btn-cancelar-edicion"
+                            class="secondary-button hidden"
+                            type="button"
+                        >
+                            Cancelar edición
+                        </button>
+
+                        <button
+                            id="btn-limpiar-formulario"
+                            class="text-button"
+                            type="button"
+                        >
+                            Limpiar formulario
+                        </button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="table-card">
+                <div class="card-heading table-heading">
+                    <div>
+                        <p class="section-label">
+                            Registros
+                        </p>
+
+                        <h2>Estudiantes registrados</h2>
+                    </div>
+
+                    <button
+                        id="btn-recargar-estudiantes"
+                        class="secondary-button"
+                        type="button"
+                    >
+                        Recargar
+                    </button>
+                </div>
+
+                <div class="search-area">
+                    <label
+                        class="search-label"
+                        for="buscar-estudiante"
+                    >
+                        Buscar estudiante
+                    </label>
+
+                    <div class="search-container">
+                        <input
+                            id="buscar-estudiante"
+                            name="buscarEstudiante"
+                            type="search"
+                            maxlength="150"
+                            placeholder="Buscar por matrícula, nombre, correo o carrera"
+                        >
+
+                        <button
+                            id="btn-limpiar-busqueda"
+                            class="text-button"
+                            type="button"
+                        >
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    id="estado-carga"
+                    class="loading-message"
+                    aria-live="polite"
+                >
+                    Cargando estudiantes...
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="tabla-estudiantes">
+                        <thead>
+                            <tr>
+                                <th scope="col">Matrícula</th>
+                                <th scope="col">Estudiante</th>
+                                <th scope="col">Correo</th>
+                                <th scope="col">Carrera</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="cuerpo-tabla-estudiantes">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div
+                    id="sin-resultados"
+                    class="empty-state hidden"
+                >
+                    <h3>No se encontraron estudiantes</h3>
+
+                    <p>
+                        No existen registros que coincidan con la
+                        búsqueda realizada.
+                    </p>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <div
+        id="modal-eliminar"
+        class="modal-overlay hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-modal-eliminar"
+    >
+        <section class="modal-card">
+            <div
+                class="modal-warning-icon"
+                aria-hidden="true"
+            >
+                !
+            </div>
+
+            <h2 id="titulo-modal-eliminar">
+                Confirmar eliminación
+            </h2>
+
+            <p>
+                Estás a punto de eliminar al estudiante:
+            </p>
+
+            <strong id="nombre-estudiante-eliminar">
+                Estudiante seleccionado
+            </strong>
+
+            <p class="modal-warning-text">
+                Esta acción no se puede deshacer.
+            </p>
+
+            <div class="modal-actions">
+                <button
+                    id="btn-confirmar-eliminacion"
+                    class="danger-button"
+                    type="button"
+                >
+                    Sí, eliminar
+                </button>
+
+                <button
+                    id="btn-cancelar-eliminacion"
+                    class="secondary-button"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/sesion.js"></script>
+    <script src="/js/estudiantes.js"></script>
+</body>
+</html>
