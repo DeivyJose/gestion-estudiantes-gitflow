@@ -1,4 +1,5 @@
 using GestionEstudiantesApi.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +35,51 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services
+    .AddAuthentication(
+        CookieAuthenticationDefaults.AuthenticationScheme
+    )
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "GestionEstudiantes.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode =
+                    StatusCodes.Status401Unauthorized;
+
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect("/");
+            return Task.CompletedTask;
+        };
+
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode =
+                    StatusCodes.Status403Forbidden;
+
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect("/");
+            return Task.CompletedTask;
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var connectionString = builder.Configuration
     .GetConnectionString("PostgreSql");
 
@@ -59,6 +105,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

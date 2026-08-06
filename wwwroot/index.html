@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Iniciar sesión | Gestión de Estudiantes</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/styles.css"
+    >
+</head>
+
+<body class="login-page">
+    <main class="login-container">
+        <section class="login-card">
+            <div class="login-header">
+                <div class="login-icon" aria-hidden="true">
+                    GE
+                </div>
+
+                <p class="login-label">
+                    Sistema académico
+                </p>
+
+                <h1>Gestión de Estudiantes</h1>
+
+                <p class="login-description">
+                    Inicia sesión para administrar los registros
+                    estudiantiles.
+                </p>
+            </div>
+
+            <form
+                id="login-form"
+                class="login-form"
+                novalidate
+            >
+                <div class="form-group">
+                    <label for="usuario">
+                        Usuario
+                    </label>
+
+                    <input
+                        id="usuario"
+                        name="usuario"
+                        type="text"
+                        minlength="3"
+                        maxlength="50"
+                        autocomplete="username"
+                        placeholder="Escribe tu usuario"
+                        required
+                    >
+
+                    <small class="field-help">
+                        El usuario debe tener entre 3 y 50 caracteres.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="contrasena">
+                        Contraseña
+                    </label>
+
+                    <div class="password-container">
+                        <input
+                            id="contrasena"
+                            name="contrasena"
+                            type="password"
+                            minlength="6"
+                            maxlength="100"
+                            autocomplete="current-password"
+                            placeholder="Escribe tu contraseña"
+                            required
+                        >
+
+                        <button
+                            id="btn-mostrar-contrasena"
+                            class="password-button"
+                            type="button"
+                            aria-label="Mostrar contraseña"
+                        >
+                            Mostrar
+                        </button>
+                    </div>
+
+                    <small class="field-help">
+                        La contraseña debe tener entre 6 y 100 caracteres.
+                    </small>
+                </div>
+
+                <div
+                    id="mensaje-login"
+                    class="message"
+                    role="alert"
+                    aria-live="polite"
+                ></div>
+
+                <button
+                    id="btn-iniciar-sesion"
+                    class="primary-button"
+                    type="submit"
+                >
+                    Iniciar sesión
+                </button>
+            </form>
+
+            <div class="demo-access">
+                <p>
+                    <strong>Acceso de demostración</strong>
+                </p>
+
+                <p>Usuario: admin</p>
+                <p>Contraseña: Admin123*</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/login.js"></script>
+</body>
+</html>
