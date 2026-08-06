@@ -124,6 +124,29 @@ public abstract class SeleniumTestBase
     [TearDown]
     public void RegistrarEvidenciaYCerrarNavegador()
     {
+        var pausaTexto =
+            Environment.GetEnvironmentVariable(
+                "SELENIUM_DEMO_PAUSE_SECONDS"
+            );
+
+        if (
+            int.TryParse(
+                pausaTexto,
+                out var pausaSegundos
+            ) &&
+            pausaSegundos > 0
+        )
+        {
+            Thread.Sleep(
+                TimeSpan.FromSeconds(
+                    Math.Min(
+                        pausaSegundos,
+                        30
+                    )
+                )
+            );
+        }
+
         string? capturaBase64 = null;
 
         try
