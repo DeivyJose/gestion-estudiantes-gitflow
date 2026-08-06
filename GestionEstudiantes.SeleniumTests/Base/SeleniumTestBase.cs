@@ -1,3 +1,6 @@
+using System.Text.RegularExpressions;
+using GestionEstudiantes.SeleniumTests.Reporting;
+using NUnit.Framework.Interfaces;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Support.UI;
@@ -6,18 +9,34 @@ namespace GestionEstudiantes.SeleniumTests.Base;
 
 public abstract class SeleniumTestBase
 {
-    protected const string UrlBase = "http://localhost:5176";
+    protected const string UrlBase =
+        "http://localhost:5176";
 
-    protected IWebDriver Driver { get; private set; } = null!;
+    protected IWebDriver Driver { get; private set; } =
+        null!;
 
-    protected WebDriverWait Espera { get; private set; } = null!;
+    protected WebDriverWait Espera { get; private set; } =
+        null!;
 
     private string? _rutaPerfilTemporal;
 
     [SetUp]
     public void PrepararNavegador()
     {
-        var rutaEdge = EncontrarMicrosoftEdge();
+        var nombrePrueba =
+            TestContext.CurrentContext.Test.Name;
+
+        var nombreCompleto =
+            TestContext.CurrentContext.Test.FullName
+            ?? nombrePrueba;
+
+        ExtentReportManager.IniciarPrueba(
+            nombrePrueba,
+            nombreCompleto
+        );
+
+        var rutaEdge =
+            EncontrarMicrosoftEdge();
 
         _rutaPerfilTemporal = Path.Combine(
             Path.GetTempPath(),
@@ -25,19 +44,36 @@ public abstract class SeleniumTestBase
             Guid.NewGuid().ToString("N")
         );
 
-        Directory.CreateDirectory(_rutaPerfilTemporal);
+        Directory.CreateDirectory(
+            _rutaPerfilTemporal
+        );
 
         var opciones = new EdgeOptions
         {
             BinaryLocation = rutaEdge,
-            PageLoadStrategy = PageLoadStrategy.Eager
+            PageLoadStrategy =
+                PageLoadStrategy.Eager
         };
 
-        opciones.AddArgument("--no-first-run");
-        opciones.AddArgument("--no-default-browser-check");
-        opciones.AddArgument("--disable-dev-shm-usage");
-        opciones.AddArgument("--disable-extensions");
-        opciones.AddArgument("--window-size=1440,900");
+        opciones.AddArgument(
+            "--no-first-run"
+        );
+
+        opciones.AddArgument(
+            "--no-default-browser-check"
+        );
+
+        opciones.AddArgument(
+            "--disable-dev-shm-usage"
+        );
+
+        opciones.AddArgument(
+            "--disable-extensions"
+        );
+
+        opciones.AddArgument(
+            "--window-size=1440,900"
+        );
 
         opciones.AddArgument(
             $"--user-data-dir={_rutaPerfilTemporal}"
@@ -50,30 +86,34 @@ public abstract class SeleniumTestBase
 
         if (ejecutarSinInterfaz)
         {
-            opciones.AddArgument("--headless=new");
+            opciones.AddArgument(
+                "--headless=new"
+            );
         }
 
         try
         {
-            /*
-             * Selenium Manager buscará o descargará automáticamente
-             * el EdgeDriver compatible con Microsoft Edge.
-             */
-            Driver = new EdgeDriver(opciones);
+            Driver =
+                new EdgeDriver(opciones);
         }
         catch (Exception error)
         {
             throw new InvalidOperationException(
-                "No fue posible iniciar Microsoft Edge con Selenium.",
+                "No fue posible iniciar Microsoft Edge " +
+                "con Selenium.",
                 error
             );
         }
 
-        Driver.Manage().Timeouts().PageLoad =
-            TimeSpan.FromSeconds(60);
+        Driver.Manage()
+            .Timeouts()
+            .PageLoad =
+                TimeSpan.FromSeconds(60);
 
-        Driver.Manage().Timeouts().ImplicitWait =
-            TimeSpan.Zero;
+        Driver.Manage()
+            .Timeouts()
+            .ImplicitWait =
+                TimeSpan.Zero;
 
         Espera = new WebDriverWait(
             Driver,
@@ -82,16 +122,49 @@ public abstract class SeleniumTestBase
     }
 
     [TearDown]
-    public void CerrarNavegador()
+    public void RegistrarEvidenciaYCerrarNavegador()
     {
+        string? capturaBase64 = null;
+
         try
         {
-            Driver?.Quit();
-            Driver?.Dispose();
+            capturaBase64 =
+                TomarCapturaFinal();
+        }
+        catch (Exception error)
+        {
+            TestContext.Progress.WriteLine(
+                $"No se pudo tomar la captura: " +
+                $"{error.Message}"
+            );
+        }
+
+        try
+        {
+            var resultado =
+                TestContext
+                    .CurrentContext
+                    .Result;
+
+            ExtentReportManager
+                .RegistrarResultado(
+                    resultado.Outcome.Status,
+                    resultado.Message,
+                    resultado.StackTrace,
+                    capturaBase64
+                );
         }
         finally
         {
-            EliminarPerfilTemporal();
+            try
+            {
+                Driver?.Quit();
+                Driver?.Dispose();
+            }
+            finally
+            {
+                EliminarPerfilTemporal();
+            }
         }
     }
 
@@ -103,7 +176,9 @@ public abstract class SeleniumTestBase
             try
             {
                 var elemento =
-                    navegador.FindElement(localizador);
+                    navegador.FindElement(
+                        localizador
+                    );
 
                 return elemento.Displayed
                     ? elemento
@@ -113,7 +188,9 @@ public abstract class SeleniumTestBase
             {
                 return null;
             }
-            catch (StaleElementReferenceException)
+            catch (
+                StaleElementReferenceException
+            )
             {
                 return null;
             }
@@ -124,6 +201,54 @@ public abstract class SeleniumTestBase
         Func<IWebDriver, bool> condicion)
     {
         Espera.Until(condicion);
+    }
+
+    private string? TomarCapturaFinal()
+    {
+        if (Driver is not ITakesScreenshot)
+        {
+            return null;
+        }
+
+        var captura =
+            ((ITakesScreenshot)Driver)
+                .GetScreenshot();
+
+        var nombrePrueba =
+            TestContext.CurrentContext.Test.Name;
+
+        var nombreSeguro =
+            Regex.Replace(
+                nombrePrueba,
+                @"[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]",
+                "_"
+            );
+
+        var fecha =
+            DateTime.Now.ToString(
+                "yyyyMMdd-HHmmss-fff"
+            );
+
+        var nombreArchivo =
+            $"{fecha}-{nombreSeguro}.png";
+
+        var rutaCaptura = Path.Combine(
+            ExtentReportManager
+                .CarpetaCapturas,
+            nombreArchivo
+        );
+
+        captura.SaveAsFile(
+            rutaCaptura
+        );
+
+        TestContext.AddTestAttachment(
+            rutaCaptura,
+            "Captura final de Selenium"
+        );
+
+        return captura
+            .AsBase64EncodedString;
     }
 
     private static string EncontrarMicrosoftEdge()
@@ -141,17 +266,23 @@ public abstract class SeleniumTestBase
             "/opt/microsoft/msedge/msedge"
         };
 
-        var rutaEncontrada = rutasPosibles
-            .Where(ruta =>
-                !string.IsNullOrWhiteSpace(ruta)
-            )
-            .FirstOrDefault(File.Exists);
+        var rutaEncontrada =
+            rutasPosibles
+                .Where(ruta =>
+                    !string.IsNullOrWhiteSpace(
+                        ruta
+                    )
+                )
+                .FirstOrDefault(
+                    File.Exists
+                );
 
         if (rutaEncontrada is null)
         {
             throw new FileNotFoundException(
                 "No se encontró Microsoft Edge. " +
-                "Configura EDGE_BINARY con la ruta del navegador."
+                "Configura EDGE_BINARY con la ruta " +
+                "del navegador."
             );
         }
 
@@ -161,14 +292,22 @@ public abstract class SeleniumTestBase
     private void EliminarPerfilTemporal()
     {
         if (
-            string.IsNullOrWhiteSpace(_rutaPerfilTemporal) ||
-            !Directory.Exists(_rutaPerfilTemporal)
+            string.IsNullOrWhiteSpace(
+                _rutaPerfilTemporal
+            ) ||
+            !Directory.Exists(
+                _rutaPerfilTemporal
+            )
         )
         {
             return;
         }
 
-        for (var intento = 1; intento <= 5; intento++)
+        for (
+            var intento = 1;
+            intento <= 5;
+            intento++
+        )
         {
             try
             {
@@ -185,7 +324,7 @@ public abstract class SeleniumTestBase
             }
             catch
             {
-                // La limpieza no cambia el resultado de la prueba.
+                // La limpieza no cambia el resultado.
             }
         }
     }
